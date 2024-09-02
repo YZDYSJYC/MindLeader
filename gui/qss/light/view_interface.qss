@@ -1,0 +1,14 @@
+#frame {
+    border: 1px solid rgba(0, 0, 0, 15);
+    border-radius: 5px;
+    background-color: transparent;
+}
+
+QPushButton {
+    margin-top: 7px; /* 保持搜索按钮和输入框在同一水平线 */
+}
+
+QStackedWidget[isTransparent=true] {
+    background-color: transparent;
+    border: none;
+}
