@@ -6,6 +6,7 @@ import qfluentwidgets
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QStackedWidget, QLabel, QApplication
 
 from gui.custom_widgets import ListFrame, StyleSheet
+from source.util.db import get_config
 
 class ToolPage(QWidget):
     def __init__(self):
@@ -19,7 +20,7 @@ class ToolPage(QWidget):
         self._layout.addWidget(self.tool_list)
 
         self.tool_stack = QStackedWidget()
-        StyleSheet.VIEW_INTERFACE.apply(self.tool_stack)
+        StyleSheet.VIEW_INTERFACE.apply(self.tool_stack, get_config('System', 'Theme'))
         self._layout.addWidget(self.tool_stack)
 
         self.setObjectName('tool_page')

@@ -4,11 +4,23 @@
     background-color: transparent;
 }
 
-QPushButton {
+QPushButton#ListFrame {
     margin-top: 7px; /* 保持搜索按钮和输入框在同一水平线 */
 }
 
-QStackedWidget[isTransparent=true] {
+SettingInterface, #scrollWidget {
+    background-color: transparent;
+}
+
+QScrollArea {
     background-color: transparent;
     border: none;
+}
+
+
+/* 标签 */
+QLabel#settingLabel {
+    font: 31px 'Microsoft YaHei Light';
+    background-color: transparent;
+    color: black;
 }

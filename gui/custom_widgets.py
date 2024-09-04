@@ -2,20 +2,29 @@
 # 作者: 拓跋龙
 # 功能: 自定义组件
 
-from typing import Sequence
+from typing import Sequence, Union
 from enum import Enum
 import traceback
 
 import darkdetect
-import fuzzywuzzy
 import fuzzywuzzy.process
-import qfluentwidgets
-from qfluentwidgets import Theme
-from PySide6.QtWidgets import QGridLayout, QVBoxLayout, QFrame
-from PySide6.QtCore import Qt
+from qfluentwidgets import Theme, StyleSheetBase, LineEdit, PushButton, ListWidget, ExpandSettingCard, FluentIconBase, \
+    RadioButton, SettingCard, ConfigItem, SwitchButton, IndicatorPosition
+from PySide6.QtWidgets import QGridLayout, QVBoxLayout, QFrame, QLabel, QButtonGroup
+from PySide6.QtCore import Qt, Signal, QObject
+from PySide6.QtGui import QIcon
+
+from source.util.db import get_config
+
+class CommonSignal(QObject):
+    """ Signal bus """
+
+    mica_enable_changed = Signal(bool)
+
+common_signal = CommonSignal()
 
 # 自定义style
-class StyleSheet(qfluentwidgets.StyleSheetBase, Enum):
+class StyleSheet(StyleSheetBase, Enum):
 
     VIEW_INTERFACE = "view_interface"
 
@@ -34,24 +43,25 @@ class ListFrame(QFrame):
         navitree_frame = QFrame()
         navitree_layout = QGridLayout()
 
-        self.tool_search_edit = qfluentwidgets.LineEdit()
+        self.tool_search_edit = LineEdit()
         self.tool_search_edit.setClearButtonEnabled(True)
         # 清空输入框的同时, 列表展示所有项
         self.tool_search_edit.clearButton.clicked.connect(lambda: self.show_all_item())
         navitree_layout.addWidget(self.tool_search_edit, 0, 0, 2, 1)
 
-        self.tool_search_btn = qfluentwidgets.PushButton('搜索')
+        self.tool_search_btn = PushButton('搜索')
+        self.tool_search_btn.setObjectName('ListFrame')
         self.tool_search_btn.clicked.connect(lambda: self.search_item(self.tool_search_edit.text()))
         navitree_layout.addWidget(self.tool_search_btn, 0, 2, 1, 1)
 
         navitree_frame.setLayout(navitree_layout)
         self._layout.addWidget(navitree_frame, alignment=Qt.AlignmentFlag.AlignTop)
 
-        self.list_widget = qfluentwidgets.ListWidget(self)
+        self.list_widget = ListWidget(self)
         self._layout.addWidget(self.list_widget)
 
         self.setObjectName('frame')
-        StyleSheet.VIEW_INTERFACE.apply(self)
+        StyleSheet.VIEW_INTERFACE.apply(self, get_config('System', 'Theme'))
 
         self.setMaximumWidth(max_width)
 
@@ -81,3 +91,126 @@ class ListFrame(QFrame):
             self.list_widget.addItems(search_result)
         except Exception:
             traceback.print_exc()
+
+class OptionsSettingCard(ExpandSettingCard):
+    """ setting card with a group of options """
+
+    optionChanged = Signal(Enum)
+
+    def __init__(self, configItem, icon: Union[str, QIcon, FluentIconBase], title, content=None, texts=None, parent=None):
+        """
+        Parameters
+        ----------
+        configItem: Enum
+            options config item
+
+        icon: str | QIcon | FluentIconBase
+            the icon to be drawn
+
+        title: str
+            the title of setting card
+
+        content: str
+            the content of setting card
+
+        texts: List[str]
+            the texts of radio buttons
+
+        parent: QWidget
+            parent window
+        """
+        super().__init__(icon, title, content, parent)
+        self.texts = texts or []
+        self.configItem = configItem
+        self.configName = configItem.name
+        self.choiceLabel = QLabel(self)
+        self.buttonGroup = QButtonGroup(self)
+
+        self.addWidget(self.choiceLabel)
+
+        # create buttons
+        self.viewLayout.setSpacing(19)
+        self.viewLayout.setContentsMargins(48, 18, 0, 18)
+        for text, option in zip(texts, configItem.options):
+            button = RadioButton(text, self.view)
+            self.buttonGroup.addButton(button)
+            self.viewLayout.addWidget(button)
+            button.setProperty(self.configName, option)
+
+        self._adjustViewSize()
+        self.buttonGroup.buttonClicked.connect(self.__onButtonClicked)
+
+    def __onButtonClicked(self, button: RadioButton):
+        """ button clicked slot """
+        if button.text() == self.choiceLabel.text():
+            return
+
+        value = button.property(self.configName)
+
+        self.choiceLabel.setText(button.text())
+        self.choiceLabel.adjustSize()
+        self.optionChanged.emit(value)
+
+    def setValue(self, value):
+        """ select button according to the value """
+        for button in self.buttonGroup.buttons():
+            isChecked = button.property(self.configName) == value
+            button.setChecked(isChecked)
+
+            if isChecked:
+                self.choiceLabel.setText(button.text())
+                self.choiceLabel.adjustSize()
+                break
+
+class SwitchSettingCard(SettingCard):
+    """ Setting card with switch button """
+
+    checkedChanged = Signal(bool)
+
+    def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None,
+                 configItem: ConfigItem = None, parent=None):
+        """
+        Parameters
+        ----------
+        icon: str | QIcon | FluentIconBase
+            the icon to be drawn
+
+        title: str
+            the title of card
+
+        content: str
+            the content of card
+
+        configItem: ConfigItem
+            configuration item operated by the card
+
+        parent: QWidget
+            parent widget
+        """
+        super().__init__(icon, title, content, parent)
+        self.configItem = configItem
+        self.switchButton = SwitchButton('关', self, IndicatorPosition.RIGHT)
+
+        if configItem:
+            configItem.valueChanged.connect(self.setValue)
+
+        # add switch button to layout
+        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+
+        self.switchButton.checkedChanged.connect(self.__onCheckedChanged)
+
+    def __onCheckedChanged(self, isChecked: bool):
+        """ switch button checked state changed slot """
+        self.setValue(isChecked)
+        self.checkedChanged.emit(isChecked)
+
+    def setValue(self, isChecked: bool):
+        self.switchButton.setChecked(isChecked)
+        self.switchButton.setText('开' if isChecked else '关')
+
+    def setChecked(self, isChecked: bool):
+        self.setValue(isChecked)
+
+    def isChecked(self):
+        return self.switchButton.isChecked()
