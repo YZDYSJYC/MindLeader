@@ -28,6 +28,8 @@ def main():
         application = MainWindow()
         application.show()
         sys.exit(app.exec())
+    except SystemExit: # 系统退出会抛出异常, 无需关注
+        pass
     except Exception:
         traceback.print_exc()
 

@@ -9,8 +9,8 @@ import traceback
 import darkdetect
 import fuzzywuzzy.process
 from qfluentwidgets import Theme, StyleSheetBase, LineEdit, PushButton, ListWidget, ExpandSettingCard, FluentIconBase, \
-    RadioButton, SettingCard, ConfigItem, SwitchButton, IndicatorPosition
-from PySide6.QtWidgets import QGridLayout, QVBoxLayout, QFrame, QLabel, QButtonGroup
+    RadioButton, SettingCard, ConfigItem, SwitchButton, IndicatorPosition, TableWidget, MessageBoxBase, SubtitleLabel
+from PySide6.QtWidgets import QGridLayout, QVBoxLayout, QFrame, QLabel, QButtonGroup, QTableWidgetItem, QWidget, QApplication
 from PySide6.QtCore import Qt, Signal, QObject
 from PySide6.QtGui import QIcon
 
@@ -214,3 +214,43 @@ class SwitchSettingCard(SettingCard):
 
     def isChecked(self):
         return self.switchButton.isChecked()
+
+class Table(TableWidget):
+    def __init__(self, header: list[str], parent=None):
+        super().__init__(parent)
+        self.verticalHeader().hide()
+        self.setBorderRadius(8)
+        self.setBorderVisible(True)
+        self.header_len = len(header)
+        self.setColumnCount(self.header_len)
+        self.setHorizontalHeaderLabels(header)
+
+    def set_data(self, datas: list):
+        self.setRowCount(len(datas))
+        for i, data in enumerate(datas):
+            for j in range(self.header_len):
+                if isinstance(data[j], QWidget):
+                    self.setCellWidget(i, j, data[j])
+                else:
+                    self.setItem(i, j, QTableWidgetItem(str(data[j])))
+        self.resizeColumnsToContents()
+
+    def clear_data(self):
+        self.clearContents()
+        self.setRowCount(0)
+
+class CustomMessageBox(MessageBoxBase):
+    """ Custom message box """
+
+    def __init__(self, content: str, parent=None):
+        super().__init__(parent)
+        self.title_label = SubtitleLabel(content, self)
+
+        # add widget to view layout
+        self.viewLayout.addWidget(self.title_label)
+
+        # change the text of button
+        self.yesButton.setText('确定')
+        self.cancelButton.setText('取消')
+
+        self.widget.setMinimumWidth(360)

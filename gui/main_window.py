@@ -2,8 +2,10 @@
 # 作者: 拓跋龙
 # 功能: 程序主界面
 
-import os
+from typing import override
+
 import qfluentwidgets
+from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtGui import Qt, QIcon
 
 from gui.custom_widgets import common_signal
@@ -32,6 +34,14 @@ class MainWindow(qfluentwidgets.FluentWindow):
         self.setMicaEffectEnabled(get_config('System', 'MicaEnabled'))
         self.add_sub_page()
 
+        # 居中显示, 默认显示在屏幕1
+        desktop = QApplication.screens()[0].availableGeometry()
+        self.resize(1000, 800)
+        w, h = desktop.width(), desktop.height()
+        self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
+        self.show()
+        QApplication.processEvents()
+
         self.connect_signal_slot()
 
     def add_sub_page(self):
@@ -43,6 +53,14 @@ class MainWindow(qfluentwidgets.FluentWindow):
 
     def connect_signal_slot(self):
         common_signal.mica_enable_changed.connect(lambda is_enabled: self.enable_changed(is_enabled))
+
+    @override
+    def switchTo(self, interface: QWidget):
+        self.stackedWidget.setCurrentWidget(interface, popOut=False)
+        # 点击对应功能时再初始化数据, 提升启动性能
+        if hasattr(interface, 'comp_init'):
+            mothed = getattr(interface, 'comp_init')
+            mothed()
 
     def enable_changed(self, is_enabled: bool):
         self.setMicaEffectEnabled(is_enabled)

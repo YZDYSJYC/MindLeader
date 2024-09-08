@@ -2,10 +2,11 @@
 # 作者: 拓跋龙
 # 功能: 工具主界面
 
-import qfluentwidgets
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QStackedWidget, QLabel, QApplication
 
 from gui.custom_widgets import ListFrame, StyleSheet
+from gui.tools.process import Process
+from gui.tools.sys_info import SysInfo
 from source.util.db import get_config
 
 class ToolPage(QWidget):
@@ -15,7 +16,7 @@ class ToolPage(QWidget):
         # type: Dict[str, QWidget]
         self.items = {}
 
-        self.tool_list = ListFrame()
+        self.tool_list = ListFrame(250)
         self.tool_list.list_widget.currentTextChanged.connect(lambda text: self.tool_changed(text))
         self._layout.addWidget(self.tool_list)
 
@@ -26,8 +27,16 @@ class ToolPage(QWidget):
         self.setObjectName('tool_page')
         self.setLayout(self._layout)
 
-        self.add_sub_tool('测试1', qfluentwidgets.TitleLabel('测试1'))
-        self.add_sub_tool('测试2', qfluentwidgets.TitleLabel('测试2'))
+        self.add_sub_tools()
+
+    def add_sub_tools(self):
+        self.sys_finfo = SysInfo()
+        self.add_sub_tool('系统信息', self.sys_finfo)
+        self.process = Process()
+        self.add_sub_tool('进程管理', self.process)
+
+    def comp_init(self):
+        self.process.comp_init()
 
     def add_sub_tool(self, tool_name: str, tool_widget: QWidget):
         if not tool_name:
