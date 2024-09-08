@@ -181,9 +181,9 @@ def kill_process(pid: int) -> bool:
             return True
 
     except (psutil.NoSuchProcess, psutil.ZombieProcess):
-        # 如果进程不存在或是僵尸进程，返回True
+        # 如果进程不存在或是僵尸进程，返回False
         log_error(f"进程 {pid} 不存在或是僵尸进程。")
-        return True
+        return False
     except psutil.AccessDenied:
         # 如果权限不足，尝试提升权限
         try:

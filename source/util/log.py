@@ -17,7 +17,7 @@ class Log(logging.Logger):
 
     def __init__(self) -> None:
         super().__init__('mind_leader')
-        self.setLevel(logging.ERROR) # 设置日志级别
+        self.setLevel(logging.INFO) # 设置日志级别
 
         # 创建一个handler，用于写入日志文件
         self.log_dir = os.path.join(os.getcwd(), 'log')

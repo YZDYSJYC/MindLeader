@@ -7,11 +7,14 @@ import copy
 from functools import partial
 
 import fuzzywuzzy.process
-from qfluentwidgets import LineEdit, PushButton, ToolButton, FluentIcon, ToolTipFilter
+from qfluentwidgets import LineEdit, PushButton, ToolButton, FluentIcon, ToolTipFilter, InfoBar, InfoBarPosition
 from PySide6.QtWidgets import QWidget, QGridLayout, QAbstractItemView
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QKeyEvent
 
 from gui.custom_widgets import Table, CustomMessageBox
 from source.client.tools.process import get_processes, kill_process
+from source.util.log import log_info
 
 class Process(QWidget):
     def __init__(self):
@@ -23,6 +26,7 @@ class Process(QWidget):
         self.process_edit.setClearButtonEnabled(True)
         # 清空输入框的同时, 列表展示所有项
         self.process_edit.clearButton.clicked.connect(lambda: self.show_all_processes())
+        self.process_edit.returnPressed.connect(lambda: self.search_process(self.process_edit.text()))
         self._layout.addWidget(self.process_edit, 0, 0, 1, 3)
 
         self.sreach_btn = PushButton('搜索')
@@ -46,23 +50,36 @@ class Process(QWidget):
         self.process_table.set_data(datas)
 
     def add_del_btn_to_process(self, datas):
-        def delete_process(process_info):
+        def delete_process(process_info, index):
             w = CustomMessageBox('确定要删除进程吗', self)
             if w.exec():
-                print(f'删除的进程名称: {process_info[0]}, 进程id: {process_info[1]}')
-                kill_process(process_info[1])
+                log_info(f'删除的进程名称: {process_info[0]}, 进程id: {process_info[1]}')
+                ok = kill_process(process_info[1])
+                if ok:
+                    self.process_table.removeRow(index)
+                else:
+                    InfoBar.success(
+                        title='删除失败!',
+                        content='所选进程不存在, 请重新查询',
+                        orient=Qt.Horizontal,
+                        isClosable=True,
+                        position=InfoBarPosition.TOP,
+                        duration=2000,
+                        parent=self
+                    )
 
         new_datas = copy.deepcopy(datas)
-        for process_info in new_datas:
+        for index, process_info in enumerate(new_datas):
             btn = PushButton('删除进程')
-            btn.clicked.connect(partial(delete_process, process_info))
+            btn.clicked.connect(partial(delete_process, process_info, index))
             process_info.append(btn)
         return new_datas
 
     def search_process(self, s: str):
-        if not s:
-            return
         try:
+            if not s:
+                self.show_all_processes()
+                return
             results = fuzzywuzzy.process.extract(s, [process_info[0] for process_info in self.processes_info], limit=20)
             search_result = []
             for result in results:

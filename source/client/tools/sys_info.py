@@ -9,11 +9,11 @@ import platform
 WMI = wmi.WMI()
 
 def get_gpu_info():
-    gpu_names = []
+    gpu_names = {}
     pynvml.nvmlInit()
     for i in range(pynvml.nvmlDeviceGetCount()):
         handle = pynvml.nvmlDeviceGetHandleByIndex(i)
-        gpu_names.append(pynvml.nvmlDeviceGetName(handle))
+        gpu_names[f'显卡{i + 1}型号'] = pynvml.nvmlDeviceGetName(handle)
     return gpu_names
 
 def get_cpu_info():
@@ -22,7 +22,6 @@ def get_cpu_info():
 
 def get_windows_info():
     win_info = platform.uname()
-    print(win_info.system)
     return {'计算机名称': win_info.node,
             '系统版本': f'{win_info.system} {win_info.release}',
             '系统内核版本': win_info.version}
