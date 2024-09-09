@@ -2,10 +2,11 @@
 # 作者: 拓跋龙
 # 功能: 程序主界面
 
+import ctypes
 from typing import override
 
 import qfluentwidgets
-from PySide6.QtWidgets import QApplication, QWidget
+from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon
 from PySide6.QtGui import Qt, QIcon
 
 from gui.custom_widgets import common_signal
@@ -30,7 +31,11 @@ class MainWindow(qfluentwidgets.FluentWindow):
         qfluentwidgets.setTheme(theme)
 
         self.setWindowTitle('思维导航')
-        self.setWindowIcon(QIcon('config/title.ico'))
+        ico = QIcon('config/title.ico')
+        self.setWindowIcon(ico)
+        # 设置任务栏图标
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("myappid")
+
         self.setMicaEffectEnabled(get_config('System', 'MicaEnabled'))
         self.add_sub_page()
 
