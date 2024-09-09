@@ -6,6 +6,7 @@ import json
 
 from qfluentwidgets import PushButton, TextEdit
 from PySide6.QtWidgets import QWidget, QGridLayout, QApplication
+from PySide6.QtCore import QThread
 
 from source.util.thread import Asynchronous
 import source.client.tools.sys_info as sys_func
@@ -26,16 +27,22 @@ class SysInfo(QWidget):
 
     def display_sys_info(self):
         self.print_msg('正在查询中, 请稍后……')
-        asyn = Asynchronous(self.query_sys_info)
-        asyn.finish.connect(lambda msg: self.print_sys_info(msg))
-        asyn.run()
+        asyn = Asynchronous(self.query_sys_info, self.stop_display)
+        asyn.start()
+
+    def stop_display(self, thread: QThread, ret):
+        thread.quit()
+        self.print_msg(ret)
 
     def query_sys_info(self):
+        sys_func.wmi_init()
         win_info = sys_func.get_windows_info()
+        vpn_info = sys_func.get_vpn_info()
         cpu_info = sys_func.get_cpu_info()
         gpu_info = sys_func.get_gpu_info()
         disk_info = sys_func.get_disk_info()
         msg = {'系统信息': win_info,
+               'VPN信息': vpn_info,
                'CPU信息': cpu_info,
                'GPU信息': gpu_info,
                '硬盘信息': disk_info}
