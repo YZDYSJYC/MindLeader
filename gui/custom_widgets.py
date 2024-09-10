@@ -254,3 +254,220 @@ class CustomMessageBox(MessageBoxBase):
         self.cancelButton.setText('取消')
 
         self.widget.setMinimumWidth(360)
+
+class LoginStatus(Enum):
+    NOT_LOGIN = 0
+    LOGINED = 1
+    LOGIN_EXPIRE = 2
+
+class LoginDialog(FramelessDialog, object):
+    def __init__(self, login_status: LoginStatus):
+        super().__init__()
+        self.setup_ui()
+
+        self.login_btn.clicked.connect(lambda: self.accept())
+        self.titleBar.closeBtn.clicked.connect(lambda: self.reject())
+
+        self.setTitleBar(StandardTitleBar(self))
+        self.titleBar.raise_()
+
+        self.label.setScaledContents(False)
+        self.setWindowTitle('om_tools登录窗口')
+        self.setWindowIcon(QIcon("config/title.ico"))
+        self.resize(1000, 650)
+
+        self.windowEffect.setMicaEffect(self.winId())
+        self.titleBar.titleLabel.setStyleSheet("""
+            QLabel{
+                background: transparent;
+                font: 13px 'Segoe UI';
+                padding: 0 4px;
+                color: white
+            }
+        """)
+
+        if login_status != LoginStatus.NOT_LOGIN:
+            self.username_edit.setText(get_config('Personal', 'Username'))
+        if login_status == LoginStatus.LOGIN_EXPIRE:
+            InfoBar.error(
+                title='',
+                content='用户名或密码已过期!',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=2000,
+                parent=self
+            )
+
+    def setup_ui(self):
+        self.setObjectName("Form")
+        self.resize(1250, 809)
+        self.setMinimumSize(QSize(700, 500))
+
+        self.h_layout = QHBoxLayout(self)
+        self.h_layout.setContentsMargins(0, 0, 0, 0)
+        self.h_layout.setSpacing(0)
+        self.h_layout.setObjectName("h_layout")
+
+        self.label = QLabel(self)
+        self.label.setPixmap(QPixmap("config/title.jpg"))
+        self.label.setScaledContents(True)
+        self.label.setObjectName("label")
+        self.h_layout.addWidget(self.label)
+
+        self.widget = QWidget(self)
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.widget.sizePolicy().hasHeightForWidth())
+        self.widget.setSizePolicy(sizePolicy)
+        self.widget.setMinimumSize(QSize(360, 0))
+        self.widget.setMaximumSize(QSize(360, 16777215))
+        self.widget.setStyleSheet("QLabel {font: 13px 'Microsoft YaHei'}")
+        self.widget.setObjectName("widget")
+        self.v_layout = QVBoxLayout(self.widget)
+        self.v_layout.setContentsMargins(20, 20, 20, 20)
+        self.v_layout.setSpacing(9)
+        self.v_layout.setObjectName("v_layout")
+        spacerItem = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.v_layout.addItem(spacerItem)
+        self.logo_label = QLabel(self.widget)
+        self.logo_label.setEnabled(True)
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.logo_label.sizePolicy().hasHeightForWidth())
+        self.logo_label.setSizePolicy(sizePolicy)
+        self.logo_label.setMinimumSize(QSize(100, 100))
+        self.logo_label.setMaximumSize(QSize(100, 100))
+        self.logo_label.setPixmap(QPixmap("config/logo.png"))
+        self.logo_label.setScaledContents(True)
+        self.v_layout.addWidget(self.logo_label, 0, Qt.AlignHCenter)
+        spacer_item = QSpacerItem(20, 15, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.v_layout.addItem(spacer_item)
+        self.gridLayout = QGridLayout()
+        self.gridLayout.setHorizontalSpacing(4)
+        self.gridLayout.setVerticalSpacing(9)
+        self.gridLayout.setObjectName("gridLayout")
+        self.label_4 = QLabel(self.widget)
+        self.label_4.setObjectName("label_4")
+        self.gridLayout.addWidget(self.label_4, 0, 1, 1, 1)
+        self.gridLayout.setColumnStretch(0, 2)
+        self.gridLayout.setColumnStretch(1, 1)
+        self.v_layout.addLayout(self.gridLayout)
+        self.user_label = QLabel(self.widget)
+        self.user_label.setText("用户名")
+        self.v_layout.addWidget(self.user_label)
+        self.username_edit = LineEdit(self.widget)
+        self.username_edit.setPlaceholderText("请输入w3账户名")
+        self.username_edit.setClearButtonEnabled(True)
+        self.v_layout.addWidget(self.username_edit)
+        self.pwd_label = QLabel(self.widget)
+        self.pwd_label.setText("密码")
+        self.v_layout.addWidget(self.pwd_label)
+        self.password_edit = LineEdit(self.widget)
+        self.password_edit.setEchoMode(QLineEdit.Password)
+        self.password_edit.setClearButtonEnabled(True)
+        self.v_layout.addWidget(self.password_edit)
+        spacer_item = QSpacerItem(20, 5, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.v_layout.addItem(spacer_item)
+        self.is_save_pwd = CheckBox(self.widget)
+        self.is_save_pwd.setChecked(True)
+        self.is_save_pwd.setText("记住密码")
+        self.v_layout.addWidget(self.is_save_pwd)
+        spacer_item = QSpacerItem(20, 5, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.v_layout.addItem(spacer_item)
+        self.login_btn = PrimaryPushButton(self.widget)
+        self.login_btn.setText("登录")
+        self.v_layout.addWidget(self.login_btn)
+        spacer_item = QSpacerItem(20, 6, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.v_layout.addItem(spacer_item)
+        spacer_item = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.v_layout.addItem(spacer_item)
+        self.h_layout.addWidget(self.widget)
+
+        QMetaObject.connectSlotsByName(self)
+
+    def resizeEvent(self, e):
+        super().resizeEvent(e)
+        pixmap = QPixmap("config/login_bg.jpg").scaled(
+            self.label.size(), Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+        self.label.setPixmap(pixmap)
+
+    # 重写accept函数
+    def accept(self):
+        username = self.username_edit.text()
+        password = self.password_edit.text()
+        if not username or not password:
+            InfoBar.error(
+                title='',
+                content='请填写用户名或密码!',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=2000,
+                parent=self
+            )
+            return
+
+        # 校验账号密码
+        ret = check_w3_account(username, password)
+        if not ret:
+            InfoBar.error(
+                title='',
+                content='用户名或密码错误!',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=2000,
+                parent=self
+            )
+            return
+
+        if self.is_save_pwd.isChecked():
+            set_config('Personal', username, 'Username')
+            set_config('Personal', password, 'Password')
+            set_config('Personal', True, 'IsLogin')
+        else:
+            set_config('Personal', '', 'Username')
+            set_config('Personal', '', 'Password')
+            set_config('Personal', False, 'IsLogin')
+        return super().accept()
+
+class InputSetting(QWidget):
+
+    max_tip_label_width = 0
+
+    def __init__(self, tip: str, defalut_text='') -> None:
+        super().__init__()
+        self._layout = QHBoxLayout(self)
+
+        self.tip_label = BodyLabel(tip)
+        self.tip_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        text_width = self.tip_label.fontMetrics().boundingRect(self.tip_label.text()).width()
+        if text_width > InputSetting.max_tip_label_width:
+            InputSetting.max_tip_label_width = text_width
+        self._layout.addWidget(self.tip_label)
+
+        self.line_edit = LineEdit()
+        if defalut_text:
+            self.line_edit.setPlaceholderText(defalut_text)
+        self.line_edit.setClearButtonEnabled(True)
+        self._layout.addWidget(self.line_edit)
+
+        self.setting_btn = PushButton('设置')
+        self._layout.addWidget(self.setting_btn)
+
+        self.setFixedHeight(50)
+
+class TextBrowser(QTextBrowser):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.layer = components.widgets.line_edit.EditLayer(self)
+        self.scrollDelegate = components.widgets.scroll_area.SmoothScrollDelegate(self)
+        StyleSheet.VIEW_INTERFACE.apply(self)
+        common.font.setFont(self)
+
+    def contextMenuEvent(self, e):
+        menu = components.widgets.menu.TextEditMenu(self)
+        menu.exec(e.globalPos(), ani=True)
