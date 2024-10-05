@@ -6,16 +6,17 @@ import ctypes
 from typing import override
 
 import qfluentwidgets
-from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon
+from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtGui import Qt, QIcon
 
 from gui.custom_widgets import common_signal
 from gui.main_page import MainPage
-from gui.music import MusicPage
+from gui.music.music import MusicPage
 from gui.games.main_page import GamePage
 from gui.tools.main_page import ToolPage
 from gui.setting import SettingPage
 from source.util.db import get_config, set_config
+
 
 class MainWindow(qfluentwidgets.FluentWindow):
     def __init__(self):

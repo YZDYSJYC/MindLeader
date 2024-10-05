@@ -12,7 +12,8 @@ conf = {
         'MicaEnabled': True,
         'IsUpdateOnStart': True,
         'LogLevel': logging.ERROR,
-    }
+    },
+    'WorkHours': {}
 }
 
 README_URL = 'https://github.com/YZDYSJYC/MindLeader/blob/main/README.md'

@@ -8,7 +8,7 @@ from PySide6.QtCore import Signal, QThread
 
 class Asynchronous(QThread):
 
-    finish = Signal(Any)
+    finish_signal = Signal()
 
     def __init__(self, callback, stop_func, args: list=None) -> None:
         super(Asynchronous, self).__init__()

@@ -3,7 +3,7 @@
 # 功能: 设置界面
 
 from qfluentwidgets import ExpandLayout, SettingCardGroup, FluentIcon, ConfigItem, QConfig, setTheme, BoolValidator, ScrollArea, \
-    HyperlinkCard, PrimaryPushSettingCard
+    HyperlinkCard, PrimaryPushSettingCard, OptionsConfigItem, OptionsValidator
 from PySide6.QtWidgets import QWidget, QLabel
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices
@@ -12,6 +12,7 @@ from gui.custom_widgets import OptionsSettingCard, SwitchSettingCard, common_sig
 from source.util.common_util import isWin11
 from source.util.db import set_config, get_config
 from source.util.default_config import README_URL, ISSUE_URL, VERSION, AUTHOR
+from source.frame.image_manager import image_theme_update
 
 class SettingPage(ScrollArea):
     def __init__(self):
@@ -26,6 +27,33 @@ class SettingPage(ScrollArea):
         self.expand_ayout.setSpacing(28)
         self.expand_ayout.setContentsMargins(60, 10, 60, 0)
 
+        self.add_system_group()
+        self.add_presonal_group()
+        self.add_update_group()
+        self.add_about_group()
+
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setViewportMargins(0, 120, 0, 20)
+        self.setWidget(self.scroll_widget)
+        self.setWidgetResizable(True)
+        self.setObjectName('setting_page')
+        StyleSheet.VIEW_INTERFACE.apply(self, get_config('System', 'Theme'))
+
+    def add_system_group(self):
+        self.sys_group = SettingCardGroup('系统', self.scroll_widget)
+        self.log_card = OptionsSettingCard(
+            OptionsConfigItem('Log', 'LogLevel', 'ERROR', OptionsValidator(['DEBUG', 'INFO', 'ERROR', 'CRITICAL'])),
+            FluentIcon.BRUSH,
+            '日志级别',
+            '设置应用日志级别, 高于或等于此级别点日志才会打印',
+            texts=['DEBUG', 'INFO', 'ERROR', 'CRITICAL'],
+            parent=self.sys_group
+        )
+        self.sys_group.addSettingCard(self.log_card)
+
+        self.expand_ayout.addWidget(self.sys_group)
+
+    def add_presonal_group(self):
         self.personal_group = SettingCardGroup('个性化', self.scroll_widget)
         self.mica_card = SwitchSettingCard(
             FluentIcon.TRANSPARENT,
@@ -51,6 +79,9 @@ class SettingPage(ScrollArea):
         self.personal_group.addSettingCard(self.mica_card)
         self.personal_group.addSettingCard(self.theme_card)
 
+        self.expand_ayout.addWidget(self.personal_group)
+
+    def add_update_group(self):
         self.update_group = SettingCardGroup('软件更新', self.scroll_widget)
         self.update_start_card = SwitchSettingCard(
             FluentIcon.UPDATE,
@@ -65,6 +96,9 @@ class SettingPage(ScrollArea):
 
         self.update_group.addSettingCard(self.update_start_card)
 
+        self.expand_ayout.addWidget(self.update_group)
+
+    def add_about_group(self):
         self.about_group = SettingCardGroup('关于', self.scroll_widget)
         self.help_card = HyperlinkCard(
             README_URL,
@@ -94,17 +128,9 @@ class SettingPage(ScrollArea):
         self.about_group.addSettingCard(self.feedback_card)
         self.about_group.addSettingCard(self.about_card)
 
-        self.expand_ayout.addWidget(self.personal_group)
-        self.expand_ayout.addWidget(self.update_group)
         self.expand_ayout.addWidget(self.about_group)
-
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setViewportMargins(0, 120, 0, 20)
-        self.setWidget(self.scroll_widget)
-        self.setWidgetResizable(True)
-        self.setObjectName('setting_page')
-        StyleSheet.VIEW_INTERFACE.apply(self, get_config('System', 'Theme'))
 
     def set_theme(self, theme):
         setTheme(theme)
+        image_theme_update(theme)
         set_config('System', theme, 'Theme')

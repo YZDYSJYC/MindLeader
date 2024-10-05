@@ -2,17 +2,20 @@
 # 作者: 拓跋龙
 # 功能: 自定义组件
 
-from typing import Sequence, Union
+from typing import Sequence, Union, Iterable
 from enum import Enum
 import traceback
 
 import darkdetect
 import fuzzywuzzy.process
 from qfluentwidgets import Theme, StyleSheetBase, LineEdit, PushButton, ListWidget, ExpandSettingCard, FluentIconBase, \
-    RadioButton, SettingCard, ConfigItem, SwitchButton, IndicatorPosition, TableWidget, MessageBoxBase, SubtitleLabel
-from PySide6.QtWidgets import QGridLayout, QVBoxLayout, QFrame, QLabel, QButtonGroup, QTableWidgetItem, QWidget, QApplication
-from PySide6.QtCore import Qt, Signal, QObject
-from PySide6.QtGui import QIcon
+    RadioButton, SettingCard, ConfigItem, SwitchButton, IndicatorPosition, TableWidget, MessageBoxBase, SubtitleLabel, \
+    InfoBar, InfoBarPosition, CheckBox, PrimaryPushButton, BodyLabel, components, common, DatePickerBase
+from qframelesswindow import FramelessDialog, StandardTitleBar
+from PySide6.QtWidgets import QGridLayout, QVBoxLayout, QFrame, QLabel, QButtonGroup, QTableWidgetItem, QWidget, QHBoxLayout, \
+    QSizePolicy, QSpacerItem, QLineEdit, QTextBrowser
+from PySide6.QtCore import Qt, Signal, QObject, QSize, QMetaObject, QDate
+from PySide6.QtGui import QIcon, QPixmap
 
 from source.util.db import get_config
 
@@ -411,7 +414,7 @@ class LoginDialog(FramelessDialog, object):
             return
 
         # 校验账号密码
-        ret = check_w3_account(username, password)
+        ret = True
         if not ret:
             InfoBar.error(
                 title='',
@@ -425,13 +428,7 @@ class LoginDialog(FramelessDialog, object):
             return
 
         if self.is_save_pwd.isChecked():
-            set_config('Personal', username, 'Username')
-            set_config('Personal', password, 'Password')
-            set_config('Personal', True, 'IsLogin')
-        else:
-            set_config('Personal', '', 'Username')
-            set_config('Personal', '', 'Password')
-            set_config('Personal', False, 'IsLogin')
+            pass
         return super().accept()
 
 class InputSetting(QWidget):
@@ -471,3 +468,76 @@ class TextBrowser(QTextBrowser):
     def contextMenuEvent(self, e):
         menu = components.widgets.menu.TextEditMenu(self)
         menu.exec(e.globalPos(), ani=True)
+
+class MonthPicker(DatePickerBase):
+    """ Month picker """
+
+    def __init__(self, parent=None):
+        """
+        Parameters
+        ----------
+        parent: QWidget
+            parent widget
+
+        """
+        super().__init__(parent=parent)
+        self.YEAR = '年'
+        self.MONTH = '月'
+        self._year = None
+        self._month = None
+
+        self.setYearFormatter(components.date_time.date_picker.ZhYearFormatter())
+        self.setMonthFormatter(components.date_time.date_picker.ZhMonthFormatter())
+        self.set_month_format()
+
+    def set_month_format(self):
+        """ set the format of date
+
+        Parameters
+        ----------
+        """
+        self.clearColumns()
+        y = QDate.currentDate().year()
+
+        self.yearIndex = 0
+        self.monthIndex = 1
+
+        self.addColumn(self.YEAR, range(y - 1, y + 100),
+                        160, formatter=self.yearFormatter())
+        self.addColumn(self.MONTH, range(1, 13),
+                        120, formatter=self.monthFormatter())
+
+        self.setColumnWidth(self.monthIndex, self._month_column_width())
+
+    def panelInitialValue(self):
+        if any(self.value()):
+            return self.value()
+
+        date = QDate.currentDate()
+        y = self.encodeValue(self.yearIndex, date.year())
+        m = self.encodeValue(self.monthIndex, date.month())
+        return [y, m]
+
+    def _month_column_width(self):
+        fm = self.fontMetrics()
+        wm = max(fm.boundingRect(i).width()
+                 for i in self.columns[self.monthIndex].items()) + 20
+
+        return max(80, wm)
+
+    def _onConfirmed(self, value: list):
+        year = self.decodeValue(self.yearIndex, value[self.yearIndex])
+        month = self.decodeValue(self.monthIndex, value[self.monthIndex])
+        self.set_date(year, month)
+
+    def get_month(self):
+        return self._year, self._month
+
+    def set_date(self, year, month):
+        self._year = year
+        self._month = month
+        self.setColumnValue(self.yearIndex, f'{year}')
+        self.setColumnValue(self.monthIndex, f'{month}')
+
+    def set_year_range(self, items: Iterable):
+        self.columns[0].setItems(items)

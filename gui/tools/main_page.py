@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QWidget, QHBoxLayout, QStackedWidget, QLabel, QApp
 from gui.custom_widgets import ListFrame, StyleSheet
 from gui.tools.process import Process
 from gui.tools.sys_info import SysInfo
+from gui.tools.work_hours import WorkHours
 from source.util.db import get_config
 
 class ToolPage(QWidget):
@@ -34,9 +35,8 @@ class ToolPage(QWidget):
         self.add_sub_tool('系统信息', self.sys_finfo)
         self.process = Process()
         self.add_sub_tool('进程管理', self.process)
-
-    def comp_init(self):
-        self.process.comp_init()
+        self.work_hours = WorkHours()
+        self.add_sub_tool('工时记录', self.work_hours)
 
     def add_sub_tool(self, tool_name: str, tool_widget: QWidget):
         if not tool_name:
@@ -52,3 +52,8 @@ class ToolPage(QWidget):
 
     def tool_changed(self, text):
         self.tool_stack.setCurrentWidget(self.items[text])
+        interface = self.tool_stack.currentWidget()
+        # 点击对应功能时再初始化数据, 提升启动性能
+        if hasattr(interface, 'comp_init'):
+            mothed = getattr(interface, 'comp_init')
+            mothed()

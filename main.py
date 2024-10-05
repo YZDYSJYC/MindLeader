@@ -5,7 +5,9 @@
 import sys
 import traceback
 
+from qfluentwidgets import FluentTranslator
 from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QTranslator, QLocale
 
 from source.util.log import log_error
 from source.util.db import config_init
@@ -25,6 +27,15 @@ def main():
         # 修改在win11高版本阴影异常
         if isWin11():
             app.setStyle('fusion')
+
+        # 设置中文界面
+        locale = QLocale(QLocale.Language.Chinese, territory=QLocale.Country.China)
+        fluentTranslator = FluentTranslator(locale)
+        settingTranslator = QTranslator()
+        settingTranslator.load(locale, "settings", ".", "resource/i18n")
+        app.installTranslator(fluentTranslator)
+        app.installTranslator(settingTranslator)
+
         application = MainWindow()
         application.show()
         sys.exit(app.exec())
