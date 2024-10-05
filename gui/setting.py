@@ -13,6 +13,7 @@ from source.util.common_util import isWin11
 from source.util.db import set_config, get_config
 from source.util.default_config import README_URL, ISSUE_URL, VERSION, AUTHOR
 from source.frame.image_manager import image_theme_update
+from source.frame.power_on_startup import register_power_on, delete_power_on
 
 class SettingPage(ScrollArea):
     def __init__(self):
@@ -87,14 +88,25 @@ class SettingPage(ScrollArea):
             FluentIcon.UPDATE,
             '在应用程序启动时检查更新',
             '新版本功能更全面更稳定（建议启动此选项）',
-            configItem= ConfigItem("Update", "CheckUpdateAtStartUp", True, BoolValidator()),
+            configItem= ConfigItem("System", "CheckUpdateAtStartUp", True, BoolValidator()),
             parent=self.update_group
         )
 
         self.update_start_card.checkedChanged.connect(lambda is_enabled: set_config('System', is_enabled, 'IsUpdateOnStart'))
         self.update_start_card.setValue(get_config('System', 'IsUpdateOnStart'))
-
         self.update_group.addSettingCard(self.update_start_card)
+
+        self.startup_card = SwitchSettingCard(
+            FluentIcon.POWER_BUTTON,
+            '设置应用程序在开机时自动启动',
+            '开机即可享受到大量功能（建议启动此选项）',
+            configItem= ConfigItem("System", "PowerOnStartUp", True, BoolValidator()),
+            parent=self.update_group
+        )
+
+        self.startup_card.checkedChanged.connect(lambda is_enabled: self.set_enable_power_on_startup(is_enabled))
+        self.startup_card.setValue(get_config('System', 'PowerOnStartUp'))
+        self.update_group.addSettingCard(self.startup_card)
 
         self.expand_ayout.addWidget(self.update_group)
 
@@ -134,3 +146,10 @@ class SettingPage(ScrollArea):
         setTheme(theme)
         image_theme_update(theme)
         set_config('System', theme, 'Theme')
+
+    def set_enable_power_on_startup(self, is_enabled):
+        set_config('System', is_enabled, 'PowerOnStartUp')
+        if is_enabled:
+            register_power_on()
+        else:
+            delete_power_on()

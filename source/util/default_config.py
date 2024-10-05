@@ -12,6 +12,7 @@ conf = {
         'MicaEnabled': True,
         'IsUpdateOnStart': True,
         'LogLevel': logging.ERROR,
+        'PowerOnStartUp': False,
     },
     'WorkHours': {}
 }

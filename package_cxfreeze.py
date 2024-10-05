@@ -17,7 +17,7 @@ g_work_space = os.getcwd()
 
 def cp_dir():
     dirs = ['config/', 'gui/qss/', 'README.md']
-    dst_path = os.path.join(g_work_space, 'build', 'exe.win-amd64-3.10')
+    dst_path = os.path.join(g_work_space, 'build', 'exe.win-amd64-3.12')
     for dir in dirs:
         if os.path.isdir(dir):
             shutil.copytree(dir, os.path.join(dst_path, dir), ignore_dangling_symlinks=True, dirs_exist_ok=True)
@@ -30,20 +30,20 @@ def cp_dir():
 
 
 # target
-main_target = Executable(script='main.py', base='Win32GUI', icon='config/title.ico', target_name='om_tool')
-upgrade_target = Executable(script='gui/upgrade.py', base='Win32GUI', icon='config/title.ico', target_name='upgrade')
+main_target = Executable(script='main.py', base='Win32GUI', icon='config/title.ico', target_name='MindLeader')
+# upgrade_target = Executable(script='gui/upgrade.py', base='Win32GUI', icon='config/title.ico', target_name='upgrade')
 
 # setup
 setup(
-    name = 'om_tool',
+    name = 'MindLeader',
     version = VERSION,
-    description = 'OM R&D TOOLS',
-    auther = 'JiangYucheng',
+    description = 'MindLeader',
+    auther = '拓跋龙',
     options = {'build_exe': {
         'includes': ['dbm.dumb'], # 需要额外打包的库
         'excludes': [], # 不需要打包的库
     }},
-    executables = [main_target, upgrade_target]
+    executables = [main_target]
 )
 
 try:
